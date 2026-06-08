@@ -1,0 +1,41 @@
+# Ignore Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Ignore Go mod files
+go.sum
+
+# Ignore vendor directory (if using vendoring for dependencies)
+build/
+
+# Ignore Docker-related files
+.docker/
+docker-compose.override.yml
+
+# Ignore IDE and editor specific files
+.vscode/
+.idea/
+
+# Ignore OS-specific files (macOS, Windows, Linux)
+.DS_Store
+Thumbs.db
+
+# Ignore compiled binaries and Docker image files
+*.tar
+*.tar.gz
+*.tgz
+*.docker
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+
+*.m3u
+config.yaml
