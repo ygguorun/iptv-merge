@@ -22,6 +22,12 @@ const (
 	unknownOrder      = 1_000_000_000
 )
 
+var (
+	version   = "dev"
+	commit    = "unknown"
+	buildDate = "unknown"
+)
+
 type URLSource struct {
 	URL       string
 	UserAgent string
@@ -52,8 +58,9 @@ type Config struct {
 }
 
 type cliOptions struct {
-	ConfigPath string
-	ShowHelp   bool
+	ConfigPath  string
+	ShowHelp    bool
+	ShowVersion bool
 }
 
 func (dictionary *ChannelDictionary) UnmarshalYAML(value *yaml.Node) error {
@@ -115,6 +122,9 @@ func parseCLIArgs(args []string) (cliOptions, error) {
 		case arg == "-h":
 			options.ShowHelp = true
 			return options, nil
+		case arg == "-v" || arg == "--version":
+			options.ShowVersion = true
+			return options, nil
 		case arg == "-c":
 			if index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" {
 				return options, fmt.Errorf("-c requires a configuration file path")
@@ -137,8 +147,13 @@ func parseCLIArgs(args []string) (cliOptions, error) {
 func printUsage() {
 	fmt.Fprintf(os.Stdout, "Usage: %s [-c config.yaml]\n\n", os.Args[0])
 	fmt.Fprintln(os.Stdout, "Options:")
-	fmt.Fprintln(os.Stdout, "  -c <path>  configuration file path (default: config.yaml)")
-	fmt.Fprintln(os.Stdout, "  -h         show this help")
+	fmt.Fprintln(os.Stdout, "  -c <path>     configuration file path (default: config.yaml)")
+	fmt.Fprintln(os.Stdout, "  -h            show this help")
+	fmt.Fprintln(os.Stdout, "  -v, --version  show version information")
+}
+
+func printVersion() {
+	fmt.Fprintf(os.Stdout, "iptv-merge %s\ncommit: %s\nbuilt: %s\n", version, commit, buildDate)
 }
 
 type resolvedSettings struct {
@@ -1196,6 +1211,10 @@ func main() {
 	}
 	if options.ShowHelp {
 		printUsage()
+		return
+	}
+	if options.ShowVersion {
+		printVersion()
 		return
 	}
 

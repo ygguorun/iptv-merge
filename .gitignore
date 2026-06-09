@@ -7,9 +7,6 @@
 *.test
 *.out
 
-# Ignore Go mod files
-go.sum
-
 # Ignore vendor directory (if using vendoring for dependencies)
 build/
 

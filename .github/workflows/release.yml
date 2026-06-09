@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          project="iptv-merge"
+          version="${GITHUB_REF_NAME}"
+          commit="$(git rev-parse --short HEAD)"
+          build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ldflags="-s -w -X main.version=${version} -X main.commit=${commit} -X main.buildDate=${build_date}"
+
+          mkdir -p dist
+
+          platforms=(
+            "linux/amd64"
+            "linux/arm64"
+            "linux/arm/7"
+            "darwin/amd64"
+            "darwin/arm64"
+            "windows/amd64"
+            "windows/arm64"
+          )
+
+          for platform in "${platforms[@]}"; do
+            IFS=/ read -r goos goarch goarm <<< "${platform}"
+            suffix="${goos}_${goarch}"
+            if [[ "${goarch}" == "arm" ]]; then
+              suffix="${goos}_armv${goarm}"
+            fi
+
+            asset_dir="dist/${project}_${version}_${suffix}"
+            binary="${project}"
+            if [[ "${goos}" == "windows" ]]; then
+              binary="${project}.exe"
+            fi
+
+            mkdir -p "${asset_dir}"
+            CGO_ENABLED=0 GOOS="${goos}" GOARCH="${goarch}" GOARM="${goarm}" \
+              go build -trimpath -ldflags="${ldflags}" -o "${asset_dir}/${binary}" .
+            cp config.example.yaml "${asset_dir}/"
+
+            if [[ "${goos}" == "windows" ]]; then
+              (cd dist && zip -qr "${project}_${version}_${suffix}.zip" "${project}_${version}_${suffix}")
+            else
+              tar -czf "dist/${project}_${version}_${suffix}.tar.gz" -C dist "${project}_${version}_${suffix}"
+            fi
+          done
+
+          (cd dist && sha256sum *.tar.gz *.zip > checksums.txt)
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            gh release upload "${tag}" dist/*.tar.gz dist/*.zip dist/checksums.txt --clobber
+          else
+            gh release create "${tag}" dist/*.tar.gz dist/*.zip dist/checksums.txt \
+              --title "${tag}" \
+              --generate-notes \
+              --verify-tag
+          fi
