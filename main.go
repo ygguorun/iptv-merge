@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -354,19 +355,19 @@ func compileURLSources(urls []string) []URLSource {
 func loadRuntimeSettings(configPath string) resolvedSettings {
 	configData, err := os.ReadFile(configPath)
 	if err != nil {
-		fmt.Println("Error loading runtime settings, using defaults:", err)
+		log.Printf("load runtime settings failed for %s, using defaults: %v", configPath, err)
 		return defaultSettings()
 	}
 
 	var config Config
 	if err := yaml.Unmarshal(configData, &config); err != nil {
-		fmt.Println("Error loading runtime settings, using defaults:", err)
+		log.Printf("parse runtime settings failed for %s, using defaults: %v", configPath, err)
 		return defaultSettings()
 	}
 
 	settings, err := resolveSettings(config.Server)
 	if err != nil {
-		fmt.Println("Error parsing runtime settings, using defaults:", err)
+		log.Printf("resolve runtime settings failed for %s, using defaults: %v", configPath, err)
 		return defaultSettings()
 	}
 	return settings
@@ -490,10 +491,13 @@ func fetchM3U(source URLSource, settings resolvedSettings, bypassCache bool) (st
 		entry, exists := rawCache[cacheKey]
 		if exists && time.Now().Before(entry.expiryTime) {
 			rawCacheLock.RUnlock()
+			log.Printf("source cache hit: %s", source.URL)
 			return entry.data, nil
 		}
 		rawCacheLock.RUnlock()
 	}
+
+	log.Printf("loading source: %s", source.URL)
 
 	var (
 		data string
@@ -519,6 +523,7 @@ func fetchM3U(source URLSource, settings resolvedSettings, bypassCache bool) (st
 		}
 		rawCacheLock.Unlock()
 	}
+	log.Printf("loaded source: %s (%d bytes)", source.URL, len(data))
 
 	return data, nil
 }
@@ -570,15 +575,18 @@ func parseSources(config *compiledConfig, bypassCache bool) ([]Channel, error) {
 
 			data, err := fetchM3U(source, config.settings, bypassCache)
 			if err != nil {
+				log.Printf("source failed: %s: %v", source.URL, err)
 				results <- sourceResult{index: sourceIndex, err: err}
 				return
 			}
 
 			channels := parseM3UData(data, sourceIndex)
 			if len(channels) == 0 {
+				log.Printf("source produced no channels: %s", source.URL)
 				results <- sourceResult{index: sourceIndex, err: fmt.Errorf("source %s contains no channels", source.URL)}
 				return
 			}
+			log.Printf("source parsed: %s (%d channels)", source.URL, len(channels))
 			results <- sourceResult{index: sourceIndex, channels: channels}
 		}(sourceIndex, source)
 	}
@@ -605,8 +613,9 @@ func parseSources(config *compiledConfig, bypassCache bool) ([]Channel, error) {
 		return nil, fmt.Errorf("all sources failed: %s", strings.Join(sourceErrors, "; "))
 	}
 	for _, sourceError := range sourceErrors {
-		fmt.Println("Source skipped:", sourceError)
+		log.Printf("source skipped: %s", sourceError)
 	}
+	log.Printf("parsed %d sources into %d channels", len(config.urls), len(allChannels))
 
 	return allChannels, nil
 }
@@ -1158,16 +1167,20 @@ func handler(configPath string) http.HandlerFunc {
 			return
 		}
 
+		start := time.Now()
 		bypassCache := r.URL.Query().Get("cache") == "false"
 		mergeURLs := r.URL.Query().Get("merge") != "false"
 		cacheKey := processedCacheKey(mergeURLs)
+		log.Printf("request %s %s from %s cache_bypass=%t merge=%t", r.Method, r.URL.Path, r.RemoteAddr, bypassCache, mergeURLs)
 		if bypassCache {
 			newM3U, err := generateAndCacheM3U(configPath, true, mergeURLs)
 			if err != nil {
+				log.Printf("request failed %s from %s after %s: %v", r.URL.Path, r.RemoteAddr, time.Since(start), err)
 				http.Error(w, fmt.Sprintf("Error generating M3U: %v", err), http.StatusInternalServerError)
 				return
 			}
 			writeM3U(w, newM3U)
+			log.Printf("request served %s from %s in %s (bypass cache)", r.URL.Path, r.RemoteAddr, time.Since(start))
 			return
 		}
 
@@ -1177,6 +1190,7 @@ func handler(configPath string) http.HandlerFunc {
 
 		if cached != nil && time.Now().Before(cached.expiryTime) {
 			writeM3U(w, cached.data)
+			log.Printf("request served %s from %s in %s (result cache hit)", r.URL.Path, r.RemoteAddr, time.Since(start))
 			return
 		}
 
@@ -1184,11 +1198,13 @@ func handler(configPath string) http.HandlerFunc {
 			return generateAndCacheM3U(configPath, false, mergeURLs)
 		})
 		if err != nil {
+			log.Printf("request failed %s from %s after %s: %v", r.URL.Path, r.RemoteAddr, time.Since(start), err)
 			http.Error(w, fmt.Sprintf("Error generating M3U: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		writeM3U(w, result.(string))
+		log.Printf("request served %s from %s in %s", r.URL.Path, r.RemoteAddr, time.Since(start))
 	}
 }
 
@@ -1203,6 +1219,9 @@ func isHTTPURL(value string) bool {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.SetPrefix("iptv-merge ")
+
 	options, err := parseCLIArgs(os.Args[1:])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
@@ -1229,8 +1248,8 @@ func main() {
 		IdleTimeout:  settings.ServerIdleTimeout,
 	}
 
-	fmt.Printf("Starting server on %s with config %s...\n", serverAddr, options.ConfigPath)
+	log.Printf("starting server version=%s commit=%s built=%s addr=%s config=%s source_cache_ttl=%s result_cache_ttl=%s", version, commit, buildDate, serverAddr, options.ConfigPath, settings.SourceCacheTTL, settings.ResultCacheTTL)
 	if err := server.ListenAndServe(); err != nil {
-		fmt.Println("Error starting server:", err)
+		log.Printf("server stopped: %v", err)
 	}
 }
