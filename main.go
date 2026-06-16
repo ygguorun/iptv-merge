@@ -1221,6 +1221,7 @@ func isHTTPURL(value string) bool {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("iptv-merge ")
+	log.SetOutput(os.Stdout)
 
 	options, err := parseCLIArgs(os.Args[1:])
 	if err != nil {
