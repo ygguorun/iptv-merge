@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -690,9 +691,7 @@ func parseEXTINF(line string) Channel {
 		setChannelField(&channel, "duration", duration)
 	}
 
-	for key, value := range parseAttributes(attrsText) {
-		setChannelField(&channel, key, value)
-	}
+	parseAttributesInto(&channel, attrsText)
 
 	if matches := qualityRegex.FindStringSubmatch(channel.Name); len(matches) == 2 {
 		setChannelField(&channel, "quality", matches[1])
@@ -720,15 +719,13 @@ func splitDurationAndAttributes(metadata string) (string, string) {
 	return duration, attrsText
 }
 
-func parseAttributes(text string) map[string]string {
-	attrs := make(map[string]string)
+func parseAttributesInto(channel *Channel, text string) {
 	for _, match := range extinfAttrRegex.FindAllStringSubmatch(text, -1) {
 		if len(match) != 3 {
 			continue
 		}
-		attrs[match[1]] = unquoteAttributeValue(match[2])
+		setChannelField(channel, match[1], unquoteAttributeValue(match[2]))
 	}
-	return attrs
 }
 
 func parseVLCOpt(channel *Channel, line string) {
@@ -885,16 +882,57 @@ func canonicalFieldName(name string) string {
 }
 
 func classifyChannels(channels []Channel, config *compiledConfig) []Channel {
-	classified := make([]Channel, 0, len(channels))
+	if len(channels) < 1024 {
+		classified := make([]Channel, 0, len(channels))
 
-	for _, channel := range channels {
-		if output, matched := matchExplicitChannel(channel, config); matched {
-			classified = append(classified, output)
-			continue
+		for _, channel := range channels {
+			if output, matched := matchExplicitChannel(channel, config); matched {
+				classified = append(classified, output)
+				continue
+			}
+			if output, matched := matchFallbackChannel(channel, config); matched {
+				classified = append(classified, output)
+			}
 		}
-		if output, matched := matchFallbackChannel(channel, config); matched {
-			classified = append(classified, output)
-		}
+
+		sortChannels(classified)
+		return dedupeChannels(classified)
+	}
+
+	workers := runtime.GOMAXPROCS(0)
+	if workers > len(channels) {
+		workers = len(channels)
+	}
+	if workers < 2 {
+		workers = 2
+	}
+
+	chunks := make([][]Channel, workers)
+	var wg sync.WaitGroup
+	for worker := 0; worker < workers; worker++ {
+		start := worker * len(channels) / workers
+		end := (worker + 1) * len(channels) / workers
+		wg.Add(1)
+		go func(index, start, end int) {
+			defer wg.Done()
+			classified := make([]Channel, 0, end-start)
+			for _, channel := range channels[start:end] {
+				if output, matched := matchExplicitChannel(channel, config); matched {
+					classified = append(classified, output)
+					continue
+				}
+				if output, matched := matchFallbackChannel(channel, config); matched {
+					classified = append(classified, output)
+				}
+			}
+			chunks[index] = classified
+		}(worker, start, end)
+	}
+	wg.Wait()
+
+	classified := make([]Channel, 0, len(channels))
+	for _, chunk := range chunks {
+		classified = append(classified, chunk...)
 	}
 
 	sortChannels(classified)
