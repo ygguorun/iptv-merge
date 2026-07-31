@@ -1232,6 +1232,16 @@ func handler(configPath string) http.HandlerFunc {
 			return
 		}
 
+		// SWR — serve stale immediately, refresh in background; cold start is the only sync path
+		if cached != nil {
+			writeM3U(w, cached.data)
+			log.Printf("request served %s from %s in %s (stale cache hit)", r.URL.Path, r.RemoteAddr, time.Since(start))
+			go processGroup.Do("all.m3u:"+cacheKey, func() (interface{}, error) {
+				return generateAndCacheM3U(configPath, false, mergeURLs)
+			})
+			return
+		}
+
 		result, err, _ := processGroup.Do("all.m3u:"+cacheKey, func() (interface{}, error) {
 			return generateAndCacheM3U(configPath, false, mergeURLs)
 		})
@@ -1242,7 +1252,7 @@ func handler(configPath string) http.HandlerFunc {
 		}
 
 		writeM3U(w, result.(string))
-		log.Printf("request served %s from %s in %s", r.URL.Path, r.RemoteAddr, time.Since(start))
+		log.Printf("request served %s from %s in %s (cold start)", r.URL.Path, r.RemoteAddr, time.Since(start))
 	}
 }
 
