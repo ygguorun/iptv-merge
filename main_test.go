@@ -87,6 +87,10 @@ func resetState(t testing.TB) {
 	configCacheLock.Lock()
 	configCache = nil
 	configCacheLock.Unlock()
+
+	// A background refresh still in flight would share the singleflight key with the next test
+	waitForRefreshFlag(t, processedCacheKey(true), false)
+	waitForRefreshFlag(t, processedCacheKey(false), false)
 }
 
 func fetchPlaylist(t testing.TB, server *httptest.Server, query, ifNoneMatch string) (int, string, http.Header) {
@@ -269,11 +273,13 @@ func TestHandlerStaleHitServesOldBodyThenRefreshes(t *testing.T) {
 	if got := source.fetches.Load(); got != 2 {
 		t.Fatalf("source fetches = %d, want 2 (one cold start plus one background refresh)", got)
 	}
+	waitForRefreshFlag(t, "merge=true", false)
 
 	status, body, _ = fetchPlaylist(t, server, "", "")
 	if status != http.StatusOK || !strings.Contains(body, "CCTV-2") {
 		t.Fatalf("post-refresh status = %d, body = %q", status, body)
 	}
+	waitForRefreshFlag(t, "merge=true", false)
 }
 
 func TestStaleHitsShareOneBackgroundRefresh(t *testing.T) {
@@ -313,6 +319,7 @@ func TestStaleHitsShareOneBackgroundRefresh(t *testing.T) {
 	if _, _, _ = fetchPlaylist(t, server, "", ""); !refreshFlagSet("merge=true") {
 		t.Fatal("a later stale hit must be able to schedule a new refresh")
 	}
+	waitForRefreshFlag(t, "merge=true", false)
 }
 
 func refreshFlagSet(key string) bool {
@@ -336,7 +343,14 @@ func TestBypassCacheIgnoresIfNoneMatch(t *testing.T) {
 	server := httptest.NewServer(handler(writeTestConfig(t, source.URL, "0s", "1m")))
 	defer server.Close()
 
-	_, _, header := fetchPlaylist(t, server, "", "")
+	coldStatus, coldBody, header := fetchPlaylist(t, server, "", "")
+	if coldStatus != http.StatusOK || coldBody == "" {
+		t.Fatalf("cold start status = %d, body length = %d, want 200 with body", coldStatus, len(coldBody))
+	}
+	if got := source.fetches.Load(); got != 1 {
+		t.Fatalf("cold start source fetches = %d, want 1", got)
+	}
+
 	status, body, _ := fetchPlaylist(t, server, "cache=false", header.Get("ETag"))
 	if status != http.StatusOK || body == "" {
 		t.Fatalf("bypass status = %d, body length = %d, want 200 with body", status, len(body))

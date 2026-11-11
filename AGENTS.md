@@ -6,6 +6,7 @@
 
 ## Commands
 - `go test ./...` is the verified check; `go test -race -count=1 .` covers the handler, cache, ETag, config-cache, and log-writer tests.
+- Handler tests share package globals, so `main_test.go:resetState` also waits for in-flight background refreshes to drain; otherwise a leftover refresh coalesces with the next test's cold start via the `all.m3u:<key>` singleflight key.
 - `go test .` is the focused check for the only package.
 - `go run . -h` shows the CLI flags: `-c <path>`, `-c=<path>`, `-h`, `-v`, and `--version`.
 - `go run . --version` prints build metadata; release builds inject it with `-ldflags -X main.version=... -X main.commit=... -X main.buildDate=...`.
