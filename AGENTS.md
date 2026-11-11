@@ -2,10 +2,10 @@
 
 ## Repo Shape
 - Single Go command in `main.go`; `go.mod` declares module `iptv-merge` with Go `1.24.1`.
-- There are no subpackages, test files, README, lint/typecheck configs, or repo-local OpenCode config; this file is the only agent instruction file found.
+- There are no subpackages, README, lint/typecheck configs, or repo-local OpenCode config; `main_test.go` and this file are the only extra source files found.
 
 ## Commands
-- `go test ./...` is the verified check; currently it reports `[no test files]` and mainly compiles the command.
+- `go test ./...` is the verified check; `go test -race -count=1 .` covers the handler, cache, ETag, config-cache, and log-writer tests.
 - `go test .` is the focused check for the only package.
 - `go run . -h` shows the CLI flags: `-c <path>`, `-c=<path>`, `-h`, `-v`, and `--version`.
 - `go run . --version` prints build metadata; release builds inject it with `-ldflags -X main.version=... -X main.commit=... -X main.buildDate=...`.
@@ -23,6 +23,10 @@
 - `urls` may be HTTP(S) URLs or local file paths; `config.example.yaml` references ignored root playlists `tv.m3u`, `sdyd.m3u`, and `ipv6.m3u`.
 - `server.*_timeout` and cache TTL values are Go duration strings parsed by `time.ParseDuration`.
 - M3U parsing keeps `#EXTGRP`, `#EXTVLCOPT:http-referrer`, and `#EXTVLCOPT:http-user-agent`; output re-emits those VLC options.
+- Result cache entries store rendered bytes plus a content-based FNV-64a `ETag`; responses set `Content-Length` (no chunked framing), `ETag`, and `Cache-Control: no-cache`, and a matching `If-None-Match` returns `304` with no body even on a stale entry.
+- Compiled config is cached per file and only reloaded when `os.Stat` size or mtime changes, so config edits apply on the next generation cycle.
+- Expired entries serve stale data while one background refresh per cache key runs; extra stale hits skip spawning a duplicate refresh goroutine.
+- Logs are queued through an async buffered writer (`main.go:asyncLogWriter`, 500ms flush); `go test` output shows log lines because tests write to stdout.
 
 ## Channel Matching
 - `channel-groups[].channels` YAML mapping order is preserved and controls output order; keep intended channel order in YAML instead of sorting keys.

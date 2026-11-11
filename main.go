@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"log"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -18,10 +21,15 @@ import (
 )
 
 const (
-	defaultConfigPath = "config.yaml"
-	defaultServerPort = 7777
-	defaultUserAgent  = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
-	unknownOrder      = 1_000_000_000
+	defaultConfigPath   = "config.yaml"
+	defaultServerPort   = 7777
+	defaultUserAgent    = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+	unknownOrder        = 1_000_000_000
+	logQueueSize        = 1024
+	logWriteBufferSize  = 64 << 10
+	logFlushInterval    = 500 * time.Millisecond
+	contentTypeM3U      = "text/plain; charset=utf-8"
+	cacheControlNoCache = "no-cache"
 )
 
 var (
@@ -173,6 +181,12 @@ type cacheEntry struct {
 	expiryTime time.Time
 }
 
+type renderedEntry struct {
+	body       []byte
+	etag       string
+	expiryTime time.Time
+}
+
 type TvgInfo struct {
 	ID   string
 	Name string
@@ -223,6 +237,13 @@ type compiledConfig struct {
 	settings     resolvedSettings
 }
 
+type cachedConfig struct {
+	path     string
+	modTime  time.Time
+	size     int64
+	compiled *compiledConfig
+}
+
 type sourceResult struct {
 	index    int
 	channels []Channel
@@ -234,9 +255,15 @@ var (
 	rawCache     = make(map[string]*cacheEntry)
 
 	processedCacheLock sync.RWMutex
-	processedCache     = make(map[string]*cacheEntry)
+	processedCache     = make(map[string]*renderedEntry)
 
 	processGroup singleflight.Group
+
+	refreshLock    sync.Mutex
+	refreshRunning = make(map[string]bool)
+
+	configCacheLock sync.Mutex
+	configCache     *cachedConfig
 
 	extinfAttrRegex = regexp.MustCompile(`([A-Za-z0-9_.:-]+)\s*=\s*("[^"]*"|'[^']*'|[^\s,]+)`)
 	qualityRegex    = regexp.MustCompile(`(?i)\((2160p|1080p|720p|576p|480p|360p|240p|8k|4k)\)`)
@@ -339,6 +366,28 @@ func loadConfig(configPath string) (*compiledConfig, error) {
 		dictionaries: dictionaries,
 		settings:     settings,
 	}, nil
+}
+
+func loadConfigCached(configPath string) (*compiledConfig, error) {
+	info, err := os.Stat(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	configCacheLock.Lock()
+	defer configCacheLock.Unlock()
+
+	if configCache != nil && configCache.path == configPath &&
+		configCache.size == info.Size() && configCache.modTime.Equal(info.ModTime()) {
+		return configCache.compiled, nil
+	}
+
+	compiled, err := loadConfig(configPath)
+	if err != nil {
+		return nil, err
+	}
+	configCache = &cachedConfig{path: configPath, modTime: info.ModTime(), size: info.Size(), compiled: compiled}
+	return compiled, nil
 }
 
 func compileURLSources(urls []string) []URLSource {
@@ -1159,7 +1208,7 @@ func firstNonEmpty(values ...string) string {
 }
 
 func generateAllM3U(configPath string, bypassCache bool, mergeURLs bool) (string, time.Duration, error) {
-	config, err := loadConfig(configPath)
+	config, err := loadConfigCached(configPath)
 	if err != nil {
 		return "", 0, err
 	}
@@ -1173,22 +1222,22 @@ func generateAllM3U(configPath string, bypassCache bool, mergeURLs bool) (string
 	return generateM3U(processedChannels, mergeURLs), config.settings.ResultCacheTTL, nil
 }
 
-func generateAndCacheM3U(configPath string, bypassCache bool, mergeURLs bool) (string, error) {
+func generateAndCacheM3U(configPath string, bypassCache bool, mergeURLs bool) (*renderedEntry, error) {
 	newM3U, resultCacheTTL, err := generateAllM3U(configPath, bypassCache, mergeURLs)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
+	entry := &renderedEntry{body: []byte(newM3U)}
+	entry.etag = etagFor(entry.body)
 	if resultCacheTTL > 0 {
+		entry.expiryTime = time.Now().Add(resultCacheTTL)
 		processedCacheLock.Lock()
-		processedCache[processedCacheKey(mergeURLs)] = &cacheEntry{
-			data:       newM3U,
-			expiryTime: time.Now().Add(resultCacheTTL),
-		}
+		processedCache[processedCacheKey(mergeURLs)] = entry
 		processedCacheLock.Unlock()
 	}
 
-	return newM3U, nil
+	return entry, nil
 }
 
 func processedCacheKey(mergeURLs bool) string {
@@ -1196,6 +1245,45 @@ func processedCacheKey(mergeURLs bool) string {
 		return "merge=true"
 	}
 	return "merge=false"
+}
+
+func startRefresh(cacheKey string) bool {
+	refreshLock.Lock()
+	defer refreshLock.Unlock()
+	if refreshRunning[cacheKey] {
+		return false
+	}
+	refreshRunning[cacheKey] = true
+	return true
+}
+
+func finishRefresh(cacheKey string) {
+	refreshLock.Lock()
+	delete(refreshRunning, cacheKey)
+	refreshLock.Unlock()
+}
+
+func scheduleRefresh(configPath, cacheKey string, mergeURLs bool) {
+	if !startRefresh(cacheKey) {
+		return
+	}
+
+	go func() {
+		defer finishRefresh(cacheKey)
+		_, err, _ := processGroup.Do("all.m3u:"+cacheKey, func() (interface{}, error) {
+			return generateAndCacheM3U(configPath, false, mergeURLs)
+		})
+		if err != nil {
+			log.Printf("background refresh failed for %s: %v", cacheKey, err)
+		}
+	}()
+}
+
+func cacheHitState(fresh bool) string {
+	if fresh {
+		return "result cache hit"
+	}
+	return "stale cache hit"
 }
 
 func handler(configPath string) http.HandlerFunc {
@@ -1211,14 +1299,14 @@ func handler(configPath string) http.HandlerFunc {
 		cacheKey := processedCacheKey(mergeURLs)
 		log.Printf("request %s %s from %s cache_bypass=%t merge=%t", r.Method, r.URL.Path, r.RemoteAddr, bypassCache, mergeURLs)
 		if bypassCache {
-			newM3U, err := generateAndCacheM3U(configPath, true, mergeURLs)
+			entry, err := generateAndCacheM3U(configPath, true, mergeURLs)
 			if err != nil {
 				log.Printf("request failed %s from %s after %s: %v", r.URL.Path, r.RemoteAddr, time.Since(start), err)
 				http.Error(w, fmt.Sprintf("Error generating M3U: %v", err), http.StatusInternalServerError)
 				return
 			}
-			writeM3U(w, newM3U)
-			log.Printf("request served %s from %s in %s (bypass cache)", r.URL.Path, r.RemoteAddr, time.Since(start))
+			writeM3U(w, entry)
+			log.Printf("request served %s from %s in %s (bypass cache) bytes=%d", r.URL.Path, r.RemoteAddr, time.Since(start), len(entry.body))
 			return
 		}
 
@@ -1226,19 +1314,20 @@ func handler(configPath string) http.HandlerFunc {
 		cached := processedCache[cacheKey]
 		processedCacheLock.RUnlock()
 
-		if cached != nil && time.Now().Before(cached.expiryTime) {
-			writeM3U(w, cached.data)
-			log.Printf("request served %s from %s in %s (result cache hit)", r.URL.Path, r.RemoteAddr, time.Since(start))
-			return
-		}
-
-		// SWR — serve stale immediately, refresh in background; cold start is the only sync path
+		// SWR — serve stale (or 304) immediately, refresh in background; cold start is the only sync path
 		if cached != nil {
-			writeM3U(w, cached.data)
-			log.Printf("request served %s from %s in %s (stale cache hit)", r.URL.Path, r.RemoteAddr, time.Since(start))
-			go processGroup.Do("all.m3u:"+cacheKey, func() (interface{}, error) {
-				return generateAndCacheM3U(configPath, false, mergeURLs)
-			})
+			fresh := time.Now().Before(cached.expiryTime)
+			state := cacheHitState(fresh)
+			if etagMatches(r.Header.Get("If-None-Match"), cached.etag) {
+				writeM3UNotModified(w, cached)
+				log.Printf("request served %s from %s in %s (%s) not_modified=true bytes=%d", r.URL.Path, r.RemoteAddr, time.Since(start), state, len(cached.body))
+			} else {
+				writeM3U(w, cached)
+				log.Printf("request served %s from %s in %s (%s) bytes=%d", r.URL.Path, r.RemoteAddr, time.Since(start), state, len(cached.body))
+			}
+			if !fresh {
+				scheduleRefresh(configPath, cacheKey, mergeURLs)
+			}
 			return
 		}
 
@@ -1251,14 +1340,47 @@ func handler(configPath string) http.HandlerFunc {
 			return
 		}
 
-		writeM3U(w, result.(string))
-		log.Printf("request served %s from %s in %s (cold start)", r.URL.Path, r.RemoteAddr, time.Since(start))
+		entry := result.(*renderedEntry)
+		writeM3U(w, entry)
+		log.Printf("request served %s from %s in %s (cold start) bytes=%d", r.URL.Path, r.RemoteAddr, time.Since(start), len(entry.body))
 	}
 }
 
-func writeM3U(w http.ResponseWriter, data string) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	_, _ = w.Write([]byte(data))
+func etagFor(body []byte) string {
+	hash := fnv.New64a()
+	_, _ = hash.Write(body)
+	return `"` + strconv.FormatUint(hash.Sum64(), 16) + `"`
+}
+
+func etagMatches(header, etag string) bool {
+	if header == "" {
+		return false
+	}
+	if header == "*" {
+		return true
+	}
+
+	strong := strings.TrimPrefix(etag, "W/")
+	for _, candidate := range strings.Split(header, ",") {
+		if strings.TrimPrefix(strings.TrimSpace(candidate), "W/") == strong {
+			return true
+		}
+	}
+	return false
+}
+
+func writeM3U(w http.ResponseWriter, entry *renderedEntry) {
+	w.Header().Set("Content-Type", contentTypeM3U)
+	w.Header().Set("ETag", entry.etag)
+	w.Header().Set("Cache-Control", cacheControlNoCache)
+	w.Header().Set("Content-Length", strconv.Itoa(len(entry.body)))
+	_, _ = w.Write(entry.body)
+}
+
+func writeM3UNotModified(w http.ResponseWriter, entry *renderedEntry) {
+	w.Header().Set("ETag", entry.etag)
+	w.Header().Set("Cache-Control", cacheControlNoCache)
+	w.WriteHeader(http.StatusNotModified)
 }
 
 func isHTTPURL(value string) bool {
@@ -1266,13 +1388,85 @@ func isHTTPURL(value string) bool {
 	return strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://")
 }
 
+type asyncLogWriter struct {
+	destination io.Writer
+	lines       chan []byte
+	done        chan struct{}
+	closed      bool
+	lock        sync.Mutex
+}
+
+func newAsyncLogWriter() *asyncLogWriter {
+	return newAsyncLogWriterTo(os.Stdout)
+}
+
+func newAsyncLogWriterTo(destination io.Writer) *asyncLogWriter {
+	writer := &asyncLogWriter{
+		destination: destination,
+		lines:       make(chan []byte, logQueueSize),
+		done:        make(chan struct{}),
+	}
+	go writer.run()
+	return writer
+}
+
+func (writer *asyncLogWriter) run() {
+	buffered := bufio.NewWriterSize(writer.destination, logWriteBufferSize)
+	ticker := time.NewTicker(logFlushInterval)
+	defer func() {
+		_ = buffered.Flush()
+		close(writer.done)
+	}()
+
+	for {
+		select {
+		case line, open := <-writer.lines:
+			if !open {
+				return
+			}
+			_, _ = buffered.Write(line)
+		case <-ticker.C:
+			_ = buffered.Flush()
+		}
+	}
+}
+
+func (writer *asyncLogWriter) Write(p []byte) (int, error) {
+	line := append([]byte(nil), p...)
+	writer.lock.Lock()
+	if !writer.closed {
+		select {
+		case writer.lines <- line:
+			writer.lock.Unlock()
+			return len(p), nil
+		default:
+		}
+	}
+	writer.lock.Unlock()
+	return writer.destination.Write(line)
+}
+
+func (writer *asyncLogWriter) Close() {
+	writer.lock.Lock()
+	if !writer.closed {
+		writer.closed = true
+		close(writer.lines)
+	}
+	writer.lock.Unlock()
+	<-writer.done
+}
+
 func main() {
+	logger := newAsyncLogWriter()
+	defer logger.Close()
+
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	log.SetPrefix("iptv-merge ")
-	log.SetOutput(os.Stdout)
+	log.SetOutput(logger)
 
 	options, err := parseCLIArgs(os.Args[1:])
 	if err != nil {
+		logger.Close()
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		printUsage()
 		os.Exit(2)
