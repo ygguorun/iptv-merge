@@ -45,10 +45,49 @@ type URLSource struct {
 
 type MatchRule map[string]string
 
+// ChannelDef is one entry under channels. A bare sequence keeps the legacy
+// form (match rules only); a mapping may explicitly set output tvg-id,
+// tvg-name and tvg-logo (e.g. tvg-id "CCTV1" while the display key stays
+// "CCTV-1"; several channels may share one id). The display name is always
+// the channel key. Each optional key is resolved independently: explicit
+// config value > first non-empty source value top-down within a merged
+// group > default (tvg-name falls back to the key; tvg-id/tvg-logo omitted).
+type ChannelDef struct {
+	TvgID   string      `yaml:"tvg-id"`
+	TvgName string      `yaml:"tvg-name"`
+	TvgLogo string      `yaml:"tvg-logo"`
+	Rules   []MatchRule `yaml:"regex"`
+}
+
+func (def *ChannelDef) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.SequenceNode {
+		return value.Decode(&def.Rules)
+	}
+
+	type rawChannelDef struct {
+		TvgID   string      `yaml:"tvg-id"`
+		TvgName string      `yaml:"tvg-name"`
+		TvgLogo string      `yaml:"tvg-logo"`
+		Rules   []MatchRule `yaml:"regex"`
+	}
+	var raw rawChannelDef
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+	def.TvgID = strings.TrimSpace(raw.TvgID)
+	def.TvgName = strings.TrimSpace(raw.TvgName)
+	def.TvgLogo = strings.TrimSpace(raw.TvgLogo)
+	def.Rules = raw.Rules
+	if len(def.Rules) == 0 {
+		return fmt.Errorf("channel definition requires non-empty regex rules")
+	}
+	return nil
+}
+
 type ChannelDictionary struct {
-	Name         string                 `yaml:"name"`
-	Channels     map[string][]MatchRule `yaml:"channels"`
-	ChannelOrder []string               `yaml:"-"`
+	Name         string                `yaml:"name"`
+	Channels     map[string]ChannelDef `yaml:"channels"`
+	ChannelOrder []string              `yaml:"-"`
 }
 
 type Settings struct {
@@ -75,8 +114,8 @@ type cliOptions struct {
 
 func (dictionary *ChannelDictionary) UnmarshalYAML(value *yaml.Node) error {
 	type rawChannelDictionary struct {
-		Name     string                 `yaml:"name"`
-		Channels map[string][]MatchRule `yaml:"channels"`
+		Name     string                `yaml:"name"`
+		Channels map[string]ChannelDef `yaml:"channels"`
 	}
 
 	var raw rawChannelDictionary
@@ -219,9 +258,12 @@ type compiledRule struct {
 }
 
 type compiledChannel struct {
-	name  string
-	order int
-	rules []compiledRule
+	name    string
+	tvgID   string
+	tvgName string
+	tvgLogo string
+	order   int
+	rules   []compiledRule
 }
 
 type compiledDictionary struct {
@@ -440,19 +482,23 @@ func compileDictionaries(dictionaries []ChannelDictionary) ([]compiledDictionary
 		channelNames := orderedChannelNames(dictionary, channelOrderByName)
 
 		for _, channelName := range channelNames {
-			rules, err := compileRules(dictionary.Channels[channelName], dictionary.Name, channelName)
+			channelDef := dictionary.Channels[channelName]
+			rules, err := compileRules(channelDef.Rules, dictionary.Name, channelName)
 			if err != nil {
 				return nil, err
 			}
 			compiledDictionary.channels = append(compiledDictionary.channels, compiledChannel{
-				name:  channelName,
-				order: channelOrder(channelName, channelOrderByName),
-				rules: rules,
+				name:    channelName,
+				tvgID:   channelDef.TvgID,
+				tvgName: channelDef.TvgName,
+				tvgLogo: channelDef.TvgLogo,
+				order:   channelOrder(channelName, channelOrderByName),
+				rules:   rules,
 			})
 		}
 
-		if fallbackRules, exists := dictionary.Channels["*"]; exists {
-			rules, err := compileRules(fallbackRules, dictionary.Name, "*")
+		if fallbackDef, exists := dictionary.Channels["*"]; exists {
+			rules, err := compileRules(fallbackDef.Rules, dictionary.Name, "*")
 			if err != nil {
 				return nil, err
 			}
@@ -993,7 +1039,7 @@ func matchExplicitChannel(channel Channel, config *compiledConfig) (Channel, boo
 		for _, compiledChannel := range dictionary.channels {
 			for _, rule := range compiledChannel.rules {
 				if matchesRule(channel, rule) {
-					return makeOutputChannel(channel, dictionary, compiledChannel.name, compiledChannel.order, rule.index, false), true
+					return makeOutputChannel(channel, dictionary, compiledChannel, rule.index, false), true
 				}
 			}
 		}
@@ -1005,7 +1051,7 @@ func matchFallbackChannel(channel Channel, config *compiledConfig) (Channel, boo
 	for _, dictionary := range config.dictionaries {
 		for _, rule := range dictionary.fallback {
 			if matchesRule(channel, rule) {
-				return makeOutputChannel(channel, dictionary, channel.Name, unknownOrder, rule.index, true), true
+				return makeOutputChannel(channel, dictionary, compiledChannel{name: channel.Name, order: unknownOrder}, rule.index, true), true
 			}
 		}
 	}
@@ -1025,21 +1071,32 @@ func matchesRule(channel Channel, rule compiledRule) bool {
 	return true
 }
 
-func makeOutputChannel(channel Channel, dictionary compiledDictionary, name string, order int, ruleIndex int, fallback bool) Channel {
+func makeOutputChannel(channel Channel, dictionary compiledDictionary, cc compiledChannel, ruleIndex int, fallback bool) Channel {
 	output := channel
 	output.Fields = copyStringMap(channel.Fields)
-	output.Name = name
+	output.Name = cc.name
 	output.Group = dictionary.name
 	output.DictionaryIndex = dictionary.index
-	output.ChannelOrder = order
+	output.ChannelOrder = cc.order
 	output.RuleIndex = ruleIndex
 	output.Fallback = fallback
-	if output.Tvg.Name == "" {
-		output.Tvg.Name = name
+	// Each tvg-* attribute resolves independently: an explicit config value
+	// wins; otherwise the source value survives, and empty ones are filled
+	// top-down from the merged group later (see generateM3U).
+	if cc.tvgID != "" {
+		output.Tvg.ID = cc.tvgID
+	}
+	if cc.tvgName != "" {
+		output.Tvg.Name = cc.tvgName
+	}
+	if cc.tvgLogo != "" {
+		output.Tvg.Logo = cc.tvgLogo
 	}
 	setChannelField(&output, "name", output.Name)
 	setChannelField(&output, "group", output.Group)
+	setChannelField(&output, "tvg_id", output.Tvg.ID)
 	setChannelField(&output, "tvg_name", output.Tvg.Name)
+	setChannelField(&output, "tvg_logo", output.Tvg.Logo)
 	return output
 }
 
@@ -1108,7 +1165,18 @@ func generateM3U(channels []Channel, mergeURLs bool) string {
 		index++
 
 		for index < len(channels) && sameOutputChannel(channel, channels[index]) {
-			urls = append(urls, channels[index].URL)
+			// Empty tvg-* attributes take the first non-empty source value top-down.
+			next := channels[index]
+			if channel.Tvg.ID == "" {
+				channel.Tvg.ID = next.Tvg.ID
+			}
+			if channel.Tvg.Name == "" {
+				channel.Tvg.Name = next.Tvg.Name
+			}
+			if channel.Tvg.Logo == "" {
+				channel.Tvg.Logo = next.Tvg.Logo
+			}
+			urls = append(urls, next.URL)
 			index++
 		}
 

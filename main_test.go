@@ -418,6 +418,64 @@ func TestETagMatches(t *testing.T) {
 	}
 }
 
+func TestChannelDefFormsResolveEPGIDs(t *testing.T) {
+	resetState(t)
+
+	dir := t.TempDir()
+	playlist := filepath.Join(dir, "source.m3u")
+	if err := os.WriteFile(playlist, []byte(
+		"#EXTM3U\n"+
+			"#EXTINF:-1 tvg-id=\"foreign.id\" tvg-name=\"CCTV 1\",CCTV-1 综合\nhttp://example.com/cctv1.m3u8\n"+
+			"#EXTINF:-1,湖南卫视\nhttp://example.com/hunan.m3u8\n"+
+			"#EXTINF:-1 tvg-id=\"src.hn\" tvg-name=\"HN源名\",湖南卫视\nhttp://example.com/hunan2.m3u8\n"+
+			"#EXTINF:-1 tvg-id=\"keep.me\",CCTV-测试\nhttp://example.com/keep.m3u8\n",
+	), 0o600); err != nil {
+		t.Fatalf("write playlist: %v", err)
+	}
+
+	configPath := filepath.Join(dir, "config.yaml")
+	content := fmt.Sprintf(
+		"urls:\n  - %q\nchannel-groups:\n  - name: test\n    channels:\n      \"CCTV-1\": {tvg-id: CCTV1, regex: [{name: '^CCTV-1'}]}\n      \"湖南卫视\": [{name: '^湖南卫视$'}]\n      \"测试频道\": {tvg-name: 显式测试名, tvg-logo: \"http://example.com/logo.png\", regex: [{name: '^CCTV-测试$'}]}\n",
+		playlist,
+	)
+	if err := os.WriteFile(configPath, []byte(content), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	output, _, err := generateAllM3U(configPath, true, true)
+	if err != nil {
+		t.Fatalf("generate m3u: %v", err)
+	}
+
+	for _, want := range []string{
+		// tvg-id overridden by config; tvg-name keeps the source value (attributes are independent)
+		`#EXTINF:-1 tvg-id="CCTV1" tvg-name="CCTV 1" group-title="test",CCTV-1`,
+		// no explicit values: merged group takes the first non-empty source tvg-id/tvg-name top-down
+		`#EXTINF:-1 tvg-id="src.hn" tvg-name="HN源名" group-title="test",湖南卫视`,
+		// explicit tvg-name/tvg-logo override; unconfigured tvg-id passes through from the source
+		`#EXTINF:-1 tvg-id="keep.me" tvg-name="显式测试名" tvg-logo="http://example.com/logo.png" group-title="test",测试频道`,
+	} {
+		if !strings.Contains(output, want) {
+			t.Errorf("output missing line:\n  want: %s\n  got:\n%s", want, output)
+		}
+	}
+
+	// mapping form without regex must fail config load
+	badPath := filepath.Join(dir, "bad.yaml")
+	badContent := fmt.Sprintf("urls:\n  - %q\nchannel-groups:\n  - name: test\n    channels:\n      \"CCTV-1\": {tvg-id: CCTV1}\n", playlist)
+	if err := os.WriteFile(badPath, []byte(badContent), 0o600); err != nil {
+		t.Fatalf("write bad config: %v", err)
+	}
+	if _, err := loadConfig(badPath); err == nil {
+		t.Fatal("channel definition without regex rules must fail config load")
+	}
+
+	// the shipped example must compile (regexes, dual channel forms)
+	if _, err := loadConfig("config.example.yaml"); err != nil {
+		t.Fatalf("load config.example.yaml: %v", err)
+	}
+}
+
 func TestLoadConfigCachedReusesUntilFileChanges(t *testing.T) {
 	resetState(t)
 

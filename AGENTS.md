@@ -31,6 +31,7 @@
 
 ## Channel Matching
 - `channel-groups[].channels` YAML mapping order is preserved and controls output order; keep intended channel order in YAML instead of sorting keys.
+- Each channel value has two forms: a sequence of match rules (legacy), or a mapping `{tvg-id/tvg-name/tvg-logo: ..., regex: [...]}`; a mapping without `regex` fails config load. The display name is always the channel key; each optional tvg-* attribute resolves independently: explicit config value > first non-empty source value top-down within a merged group > default (tvg-name falls back to the key, id/logo omitted). Multiple keys may share one tvg-id (many-to-one). `config.example.yaml` maps ids for https://epg.zsdc.eu.org/ where they differ from the display key.
 - Channel rule lists are OR; fields within one rule map are AND; every field value is a Go regexp, and invalid or empty rules fail config load.
 - The `"*"` channel key is fallback-only after explicit channel matches fail; it is not part of explicit channel ordering.
 - Rule field names are canonicalized before matching, so aliases such as `title`, `channel`, and `display_name` map to `name`, while `group-title` and `group_name` map to `group`.

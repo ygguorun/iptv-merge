@@ -1,4 +1,10 @@
 # Example runtime configuration. Replace local test sources with remote subscription URLs for deployment.
+# Channel entries support two forms:
+#   "频道名": [规则...]                        # legacy: match rules only
+#   "频道名": {tvg-id/tvg-name/tvg-logo: 显式输出值, regex: [规则...]}   # optional keys, each resolved independently:
+#                                                  # 配置显式值 > 合并组内源值从上到下第一个非空 > 默认(tvg-name=键名, id/logo省略)
+# tvg-id values below target https://epg.zsdc.eu.org/ (ids are plain channel names, e.g. "CCTV1", "CCTV5+", "求索频道").
+# tvg-logo values come from taksssss/tv iconList_default.json (gcore.jsdelivr CDN); channels without an icon entry are left unconfigured.
 urls:
   - "tv.m3u"
   - "sdyd.m3u"
@@ -16,155 +22,155 @@ server:
 channel-groups:
   - name: "央视频道"
     channels:
-      "CCTV-1": [{name: '(?i)^cctv[- ]?1([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?1$'}, {tvg_id: '(?i)^cctv[- ]?1$'}]
-      "CCTV-2": [{name: '(?i)^cctv[- ]?2([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?2$'}, {tvg_id: '(?i)^cctv[- ]?2$'}]
-      "CCTV-3": [{name: '(?i)^cctv[- ]?3([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?3$'}, {tvg_id: '(?i)^cctv[- ]?3$'}]
-      "CCTV-4": [{name: '(?i)^cctv[- ]?4($|[-_ ].*)', tvg_name: '(?i)^cctv[- ]?4$'}, {name: '(?i)^cctv[- ]?4\s+[0-9]+M.*'}, {tvg_name: '(?i)^cctv[- ]?4$'}, {tvg_name: '(?i)^cctv[- ]?4\s+[0-9]+M.*'}, {tvg_id: '(?i)^cctv[- ]?4$'}]
-      "CCTV-4 亚洲": [{name: '(?i)^cctv[- ]?4\s*亚洲'}, {tvg_name: '(?i)^cctv[- ]?4\s*亚洲$'}]
-      "CCTV-4 欧洲": [{name: '(?i)^cctv[- ]?4\s*欧洲'}, {tvg_name: '(?i)^cctv[- ]?4\s*欧洲$'}]
-      "CCTV-4 美洲": [{name: '(?i)^cctv[- ]?4\s*美洲'}, {tvg_name: '(?i)^cctv[- ]?4\s*美洲$'}]
-      "CCTV-5": [{name: '(?i)^cctv[- ]?5($|[-_ ].*)'}, {tvg_name: '(?i)^cctv[- ]?5$'}, {tvg_id: '(?i)^cctv[- ]?5$'}]
-      "CCTV-5P": [{name: '(?i)^cctv[- ]?5(\+|p)([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?5(\+|p)$'}, {tvg_id: '(?i)^cctv[- ]?5(\+|p)$'}]
-      "CCTV-6": [{name: '(?i)^cctv[- ]?6([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?6$'}, {tvg_id: '(?i)^cctv[- ]?6$'}]
-      "CCTV-7": [{name: '(?i)^cctv[- ]?7([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?7$'}, {tvg_id: '(?i)^cctv[- ]?7$'}]
-      "CCTV-8": [{name: '(?i)^cctv[- ]?8([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?8$'}, {tvg_id: '(?i)^cctv[- ]?8$'}]
-      "CCTV-9": [{name: '(?i)^cctv[- ]?9([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?9$'}, {tvg_id: '(?i)^cctv[- ]?9$'}]
-      "CCTV-10": [{name: '(?i)^cctv[- ]?10([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?10$'}, {tvg_id: '(?i)^cctv[- ]?10$'}]
-      "CCTV-11": [{name: '(?i)^cctv[- ]?11([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?11$'}, {tvg_id: '(?i)^cctv[- ]?11$'}]
-      "CCTV-12": [{name: '(?i)^cctv[- ]?12([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?12$'}, {tvg_id: '(?i)^cctv[- ]?12$'}]
-      "CCTV-13": [{name: '(?i)^cctv[- ]?13([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?13$'}, {tvg_id: '(?i)^cctv[- ]?13$'}]
-      "CCTV-14": [{name: '(?i)^cctv[- ]?14([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?14$'}, {tvg_id: '(?i)^cctv[- ]?14$'}]
-      "CCTV-15": [{name: '(?i)^cctv[- ]?15([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?15$'}, {tvg_id: '(?i)^cctv[- ]?15$'}]
-      "CCTV-16": [{name: '(?i)^cctv[- ]?16([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?16$'}, {tvg_id: '(?i)^cctv[- ]?16$'}]
-      "CCTV-17": [{name: '(?i)^cctv[- ]?17([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?17$'}, {tvg_id: '(?i)^cctv[- ]?17$'}]
-      "CCTV-超高清4K": [{name: '(?i)^cctv[- ]?4k([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?4k$'}, {tvg_id: '(?i)^cctv[- ]?4k$'}, {name: 'CCTV-超高清4K'}]
-      "CCTV-超高清8K": [{name: '(?i)^cctv[- ]?8k([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?8k$'}, {tvg_id: '(?i)^cctv[- ]?8k$'}, {name: 'CCTV-超高清8K'}]
-      "CGTN": [{name: '(?i)^cgtn($|[-_ ](高码|hevc|\d.*))'}, {tvg_name: '(?i)^cgtn$'}]
-      "CGTN-英语": [{name: '(?i)^cgtn[-_ ]?(en|英语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(en|英语)($|[-_ ].*)'}]
+      "CCTV-1 综合": {tvg-id: CCTV1, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV1.png", regex: [{name: '(?i)^cctv[- ]?1([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?1$'}, {tvg_id: '(?i)^cctv[- ]?1$'}]}
+      "CCTV-2 财经": {tvg-id: CCTV2, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV2.png", regex: [{name: '(?i)^cctv[- ]?2([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?2$'}, {tvg_id: '(?i)^cctv[- ]?2$'}]}
+      "CCTV-3 综艺": {tvg-id: CCTV3, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV3.png", regex: [{name: '(?i)^cctv[- ]?3([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?3$'}, {tvg_id: '(?i)^cctv[- ]?3$'}]}
+      "CCTV-4 中文国际": {tvg-id: CCTV4, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV4.png", regex: [{name: '(?i)^cctv[- ]?4($|[-_ ].*)', tvg_name: '(?i)^cctv[- ]?4$'}, {name: '(?i)^cctv[- ]?4\s+[0-9]+M.*'}, {tvg_name: '(?i)^cctv[- ]?4$'}, {tvg_name: '(?i)^cctv[- ]?4\s+[0-9]+M.*'}, {tvg_id: '(?i)^cctv[- ]?4$'}]}
+      "CCTV-4 中文国际 亚洲": {tvg-id: CCTV4, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV4.png", regex: [{name: '(?i)^cctv[- ]?4\s*亚洲'}, {tvg_name: '(?i)^cctv[- ]?4\s*亚洲$'}]}
+      "CCTV-4 中文国际 欧洲": {tvg-id: CCTV4, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV4.png", regex: [{name: '(?i)^cctv[- ]?4\s*欧洲'}, {tvg_name: '(?i)^cctv[- ]?4\s*欧洲$'}]}
+      "CCTV-4 中文国际 美洲": {tvg-id: CCTV4, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV4.png", regex: [{name: '(?i)^cctv[- ]?4\s*美洲'}, {tvg_name: '(?i)^cctv[- ]?4\s*美洲$'}]}
+      "CCTV-5 体育": {tvg-id: CCTV5, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV5.png", regex: [{name: '(?i)^cctv[- ]?5($|[-_ ].*)'}, {tvg_name: '(?i)^cctv[- ]?5$'}, {tvg_id: '(?i)^cctv[- ]?5$'}]}
+      "CCTV-5+ 体育赛事": {tvg-id: CCTV5+, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV5+.png", regex: [{name: '(?i)^cctv[- ]?5(\+|p)([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?5(\+|p)$'}, {tvg_id: '(?i)^cctv[- ]?5(\+|p)$'}]}
+      "CCTV-6 电影": {tvg-id: CCTV6, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV6.png", regex: [{name: '(?i)^cctv[- ]?6([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?6$'}, {tvg_id: '(?i)^cctv[- ]?6$'}]}
+      "CCTV-7 国防军事": {tvg-id: CCTV7, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV7.png", regex: [{name: '(?i)^cctv[- ]?7([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?7$'}, {tvg_id: '(?i)^cctv[- ]?7$'}]}
+      "CCTV-8 电视剧": {tvg-id: CCTV8, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV8.png", regex: [{name: '(?i)^cctv[- ]?8([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?8$'}, {tvg_id: '(?i)^cctv[- ]?8$'}]}
+      "CCTV-9 纪录": {tvg-id: CCTV9, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV9.png", regex: [{name: '(?i)^cctv[- ]?9([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?9$'}, {tvg_id: '(?i)^cctv[- ]?9$'}]}
+      "CCTV-10 科教": {tvg-id: CCTV10, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV10.png", regex: [{name: '(?i)^cctv[- ]?10([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?10$'}, {tvg_id: '(?i)^cctv[- ]?10$'}]}
+      "CCTV-11 戏曲": {tvg-id: CCTV11, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV11.png", regex: [{name: '(?i)^cctv[- ]?11([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?11$'}, {tvg_id: '(?i)^cctv[- ]?11$'}]}
+      "CCTV-12 社会与法": {tvg-id: CCTV12, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV12.png", regex: [{name: '(?i)^cctv[- ]?12([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?12$'}, {tvg_id: '(?i)^cctv[- ]?12$'}]}
+      "CCTV-13 新闻": {tvg-id: CCTV13, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV13.png", regex: [{name: '(?i)^cctv[- ]?13([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?13$'}, {tvg_id: '(?i)^cctv[- ]?13$'}]}
+      "CCTV-14 少儿": {tvg-id: CCTV14, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV14.png", regex: [{name: '(?i)^cctv[- ]?14([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?14$'}, {tvg_id: '(?i)^cctv[- ]?14$'}]}
+      "CCTV-15 音乐": {tvg-id: CCTV15, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV15.png", regex: [{name: '(?i)^cctv[- ]?15([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?15$'}, {tvg_id: '(?i)^cctv[- ]?15$'}]}
+      "CCTV-16 奥林匹克": {tvg-id: CCTV16, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV16.png", regex: [{name: '(?i)^cctv[- ]?16([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?16$'}, {tvg_id: '(?i)^cctv[- ]?16$'}]}
+      "CCTV-17 农业农村": {tvg-id: CCTV17, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV17.png", regex: [{name: '(?i)^cctv[- ]?17([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?17$'}, {tvg_id: '(?i)^cctv[- ]?17$'}]}
+      "CCTV-4K 超高清": {tvg-id: CCTV4K, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV4K.png", regex: [{name: '(?i)^cctv[- ]?4k([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?4k$'}, {tvg_id: '(?i)^cctv[- ]?4k$'}, {name: 'CCTV-超高清4K'}]}
+      "CCTV-8K 超高清": {tvg-id: CCTV8K, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CCTV8K.png", regex: [{name: '(?i)^cctv[- ]?8k([^0-9]|$)'}, {tvg_name: '(?i)^cctv[- ]?8k$'}, {tvg_id: '(?i)^cctv[- ]?8k$'}, {name: 'CCTV-超高清8K'}]}
+      "CGTN": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CGTN.png", regex: [{name: '(?i)^cgtn($|[-_ ](高码|hevc|\d.*))'}, {tvg_name: '(?i)^cgtn$'}]}
+      "CGTN-英语": {tvg-id: CGTN英语, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CGTN英语.png", regex: [{name: '(?i)^cgtn[-_ ]?(en|英语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(en|英语)($|[-_ ].*)'}]}
       "CGTN-纪录": [{name: '(?i)^cgtn[-_ ]?(doc|纪录|记录)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(doc|纪录|记录)($|[-_ ].*)'}]
-      "CGTN-法语": [{name: '(?i)^cgtn[-_ ]?(fr|法语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(fr|法语)($|[-_ ].*)'}]
-      "CGTN-西语": [{name: '(?i)^cgtn[-_ ]?(sp|西语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(sp|西语)($|[-_ ].*)'}]
+      "CGTN-法语": {tvg-id: CGTN法语, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CGTN法语.png", regex: [{name: '(?i)^cgtn[-_ ]?(fr|法语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(fr|法语)($|[-_ ].*)'}]}
+      "CGTN-西语": {tvg-id: CGTN西班牙语, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CGTN西班牙语.png", regex: [{name: '(?i)^cgtn[-_ ]?(sp|西语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(sp|西语)($|[-_ ].*)'}]}
       "CGTN-俄语": [{name: '(?i)^cgtn[-_ ]?(ru|俄语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(ru|俄语)($|[-_ ].*)'}]
       "CGTN-阿语": [{name: '(?i)^cgtn[-_ ]?(ar|阿语)($|[-_ ].*)'}, {tvg_name: '(?i)^cgtn[-_ ]?(ar|阿语)($|[-_ ].*)'}]
-      "中国教育1": [{name: '^中国教育(电视台)?1(台)?($|[-_ ].*)'}, {tvg_name: '^中国教育1(台)?($|[-_ ].*)'}]
-      "中国教育2": [{name: '^中国教育(电视台)?2(台)?($|[-_ ].*)'}, {tvg_name: '^中国教育2(台)?($|[-_ ].*)'}]
-      "中国教育4": [{name: '^中国教育(电视台)?4(台)?($|[-_ ].*)'}, {tvg_name: '^中国教育4(台)?($|[-_ ].*)'}]
-      "中国交通": [{name: '^中国交通($|[-_ ].*)'}, {tvg_name: '^中国交通($|[-_ ].*)'}]
+      "中国教育1": {tvg-id: CETV1, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CETV1.png", regex: [{name: '^中国教育(电视台)?1(台)?($|[-_ ].*)'}, {tvg_name: '^中国教育1(台)?($|[-_ ].*)'}]}
+      "中国教育2": {tvg-id: CETV2, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CETV2.png", regex: [{name: '^中国教育(电视台)?2(台)?($|[-_ ].*)'}, {tvg_name: '^中国教育2(台)?($|[-_ ].*)'}]}
+      "中国教育4": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/中国教育4.png", regex: [{name: '^中国教育(电视台)?4(台)?($|[-_ ].*)'}, {tvg_name: '^中国教育4(台)?($|[-_ ].*)'}]}
+      "中国交通": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/中国交通.png", regex: [{name: '^中国交通($|[-_ ].*)'}, {tvg_name: '^中国交通($|[-_ ].*)'}]}
       "海洋频道": [{name: '^海洋频道($|[-_ ].*)'}, {tvg_name: '^海洋频道($|[-_ ].*)'}]
       "*": [{group: '^(央视|央视频道|央视3|央视频道2)$'}]
 
   - name: "卫视频道"
     channels:
-      "北京卫视": [{name: '^北京卫视($|[-_ ].*)'}, {tvg_name: '^北京卫视$'}]
-      "东方卫视": [{name: '^(上海)?东方卫视($|[-_ ].*)'}, {tvg_name: '^东方卫视$'}]
-      "天津卫视": [{name: '^天津卫视($|[-_ ].*)'}, {tvg_name: '^天津卫视$'}]
-      "重庆卫视": [{name: '^重庆卫视($|[-_ ].*)'}, {tvg_name: '^重庆卫视$'}]
-      "黑龙江卫视": [{name: '^黑龙江卫视($|[-_ ].*)'}, {tvg_name: '^黑龙江卫视$'}]
-      "吉林卫视": [{name: '^吉林卫视($|[-_ ].*)'}, {tvg_name: '^吉林卫视$'}]
-      "辽宁卫视": [{name: '^辽宁卫视($|[-_ ].*)'}, {tvg_name: '^辽宁卫视$'}]
-      "内蒙古卫视": [{name: '^内蒙古卫视($|[-_ ].*)'}, {tvg_name: '^内蒙古卫视$'}]
-      "河北卫视": [{name: '^河北卫视($|[-_ ].*)'}, {tvg_name: '^河北卫视$'}]
-      "山西卫视": [{name: '^山西卫视($|[-_ ].*)'}, {tvg_name: '^山西卫视$'}]
-      "山东卫视": [{name: '^山东卫视($|[-_ ].*)'}, {tvg_name: '^山东卫视$'}]
-      "山东教育卫视": [{name: '^山东教育卫视($|[-_ ].*)'}, {tvg_name: '^山东教育卫视$'}]
-      "河南卫视": [{name: '^河南卫视($|[-_ ].*)'}, {tvg_name: '^河南卫视$'}]
-      "湖北卫视": [{name: '^湖北卫视($|[-_ ].*)'}, {tvg_name: '^湖北卫视$'}]
-      "湖南卫视": [{name: '^湖南卫视($|[-_ ].*)'}, {tvg_name: '^湖南卫视$'}]
-      "安徽卫视": [{name: '^安徽卫视($|[-_ ].*)'}, {tvg_name: '^安徽卫视$'}]
-      "江西卫视": [{name: '^江西卫视($|[-_ ].*)'}, {tvg_name: '^江西卫视$'}]
-      "江苏卫视": [{name: '^江苏卫视($|[-_ ].*)'}, {tvg_name: '^江苏卫视$'}]
-      "浙江卫视": [{name: '^浙江卫视($|[-_ ].*)'}, {tvg_name: '^浙江卫视$'}]
-      "东南卫视": [{name: '^东南卫视($|[-_ ].*)'}, {tvg_name: '^东南卫视$'}]
-      "厦门卫视": [{name: '^厦门卫视($|[-_ ].*)'}, {tvg_name: '^厦门卫视$'}]
-      "广东卫视": [{name: '^广东卫视($|[-_ ].*)'}, {tvg_name: '^广东卫视$'}]
-      "深圳卫视": [{name: '^深圳卫视($|[-_ ].*)'}, {tvg_name: '^深圳卫视$'}]
-      "大湾区卫视": [{name: '^大湾区卫视($|[-_ ].*)'}, {tvg_name: '^大湾区卫视$'}]
-      "广西卫视": [{name: '^广西卫视($|[-_ ].*)'}, {tvg_name: '^广西卫视$'}]
-      "海南卫视": [{name: '^海南卫视($|[-_ ].*)'}, {tvg_name: '^海南卫视$'}]
-      "四川卫视": [{name: '^四川卫视($|[-_ ].*)'}, {tvg_name: '^四川卫视$'}]
-      "贵州卫视": [{name: '^贵州卫视($|[-_ ].*)'}, {tvg_name: '^贵州卫视$'}]
-      "云南卫视": [{name: '^云南卫视($|[-_ ].*)'}, {tvg_name: '^云南卫视$'}]
-      "西藏卫视": [{name: '^西藏卫视($|[-_ ].*)'}, {tvg_name: '^西藏卫视$'}]
-      "陕西卫视": [{name: '^陕西卫视($|[-_ ].*)'}, {tvg_name: '^陕西卫视$'}]
-      "甘肃卫视": [{name: '^甘肃卫视($|[-_ ].*)'}, {tvg_name: '^甘肃卫视$'}]
-      "青海卫视": [{name: '^青海卫视($|[-_ ].*)'}, {tvg_name: '^青海卫视$'}]
-      "宁夏卫视": [{name: '^宁夏卫视($|[-_ ].*)'}, {tvg_name: '^宁夏卫视$'}]
-      "新疆卫视": [{name: '^新疆卫视($|[-_ ].*)'}, {tvg_name: '^新疆卫视$'}]
-      "兵团卫视": [{name: '^兵团卫视($|[-_ ].*)'}, {tvg_name: '^兵团卫视$'}]
-      "三沙卫视": [{name: '^三沙卫视($|[-_ ].*)'}, {tvg_name: '^三沙卫视$'}]
-      "延边卫视": [{name: '^延边卫视($|[-_ ].*)'}, {tvg_name: '^延边卫视$'}]
-      "康巴卫视": [{name: '^康巴卫视($|[-_ ].*)'}, {tvg_name: '^康巴卫视$'}]
-      "安多卫视": [{name: '^安多卫视($|[-_ ].*)'}, {tvg_name: '^安多卫视$'}]
+      "北京卫视": {tvg-id: 北京卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京卫视.png", regex: [{name: '^北京卫视($|[-_ ].*)'}, {tvg_name: '^北京卫视$'}]}
+      "东方卫视": {tvg-id: 东方卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/东方卫视.png", regex: [{name: '^(上海)?东方卫视($|[-_ ].*)'}, {tvg_name: '^东方卫视$'}]}
+      "天津卫视": {tvg-id: 天津卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/天津卫视.png", regex: [{name: '^天津卫视($|[-_ ].*)'}, {tvg_name: '^天津卫视$'}]}
+      "重庆卫视": {tvg-id: 重庆卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/重庆卫视.png", regex: [{name: '^重庆卫视($|[-_ ].*)'}, {tvg_name: '^重庆卫视$'}]}
+      "黑龙江卫视": {tvg-id: 黑龙江卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/黑龙江卫视.png", regex: [{name: '^黑龙江卫视($|[-_ ].*)'}, {tvg_name: '^黑龙江卫视$'}]}
+      "吉林卫视": {tvg-id: 吉林卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/吉林卫视.png", regex: [{name: '^吉林卫视($|[-_ ].*)'}, {tvg_name: '^吉林卫视$'}]}
+      "辽宁卫视": {tvg-id: 辽宁卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/辽宁卫视.png", regex: [{name: '^辽宁卫视($|[-_ ].*)'}, {tvg_name: '^辽宁卫视$'}]}
+      "内蒙古卫视": {tvg-id: 内蒙古卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/内蒙古卫视.png", regex: [{name: '^内蒙古卫视($|[-_ ].*)'}, {tvg_name: '^内蒙古卫视$'}]}
+      "河北卫视": {tvg-id: 河北卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/河北卫视.png", regex: [{name: '^河北卫视($|[-_ ].*)'}, {tvg_name: '^河北卫视$'}]}
+      "山西卫视": {tvg-id: 山西卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山西卫视.png", regex: [{name: '^山西卫视($|[-_ ].*)'}, {tvg_name: '^山西卫视$'}]}
+      "山东卫视": {tvg-id: 山东卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东卫视.png", regex: [{name: '^山东卫视($|[-_ ].*)'}, {tvg_name: '^山东卫视$'}]}
+      "山东教育卫视": {tvg-id: 山东教育卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东教育卫视.png", regex: [{name: '^山东教育卫视($|[-_ ].*)'}, {tvg_name: '^山东教育卫视$'}]}
+      "河南卫视": {tvg-id: 河南卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/河南卫视.png", regex: [{name: '^河南卫视($|[-_ ].*)'}, {tvg_name: '^河南卫视$'}]}
+      "湖北卫视": {tvg-id: 湖北卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/湖北卫视.png", regex: [{name: '^湖北卫视($|[-_ ].*)'}, {tvg_name: '^湖北卫视$'}]}
+      "湖南卫视": {tvg-id: 湖南卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/湖南卫视.png", regex: [{name: '^湖南卫视($|[-_ ].*)'}, {tvg_name: '^湖南卫视$'}]}
+      "安徽卫视": {tvg-id: 安徽卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/安徽卫视.png", regex: [{name: '^安徽卫视($|[-_ ].*)'}, {tvg_name: '^安徽卫视$'}]}
+      "江西卫视": {tvg-id: 江西卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/江西卫视.png", regex: [{name: '^江西卫视($|[-_ ].*)'}, {tvg_name: '^江西卫视$'}]}
+      "江苏卫视": {tvg-id: 江苏卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/江苏卫视.png", regex: [{name: '^江苏卫视($|[-_ ].*)'}, {tvg_name: '^江苏卫视$'}]}
+      "浙江卫视": {tvg-id: 浙江卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/浙江卫视.png", regex: [{name: '^浙江卫视($|[-_ ].*)'}, {tvg_name: '^浙江卫视$'}]}
+      "东南卫视": {tvg-id: 东南卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/东南卫视.png", regex: [{name: '^东南卫视($|[-_ ].*)'}, {tvg_name: '^东南卫视$'}]}
+      "厦门卫视": {tvg-id: 厦门卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/厦门卫视.png", regex: [{name: '^厦门卫视($|[-_ ].*)'}, {tvg_name: '^厦门卫视$'}]}
+      "广东卫视": {tvg-id: 广东卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/广东卫视.png", regex: [{name: '^广东卫视($|[-_ ].*)'}, {tvg_name: '^广东卫视$'}]}
+      "深圳卫视": {tvg-id: 深圳卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/深圳卫视.png", regex: [{name: '^深圳卫视($|[-_ ].*)'}, {tvg_name: '^深圳卫视$'}]}
+      "大湾区卫视": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/大湾区卫视.png", regex: [{name: '^大湾区卫视($|[-_ ].*)'}, {tvg_name: '^大湾区卫视$'}]}
+      "广西卫视": {tvg-id: 广西卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/广西卫视.png", regex: [{name: '^广西卫视($|[-_ ].*)'}, {tvg_name: '^广西卫视$'}]}
+      "海南卫视": {tvg-id: 海南卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/海南卫视.png", regex: [{name: '^海南卫视($|[-_ ].*)'}, {tvg_name: '^海南卫视$'}]}
+      "四川卫视": {tvg-id: 四川卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/四川卫视.png", regex: [{name: '^四川卫视($|[-_ ].*)'}, {tvg_name: '^四川卫视$'}]}
+      "贵州卫视": {tvg-id: 贵州卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/贵州卫视.png", regex: [{name: '^贵州卫视($|[-_ ].*)'}, {tvg_name: '^贵州卫视$'}]}
+      "云南卫视": {tvg-id: 云南卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/云南卫视.png", regex: [{name: '^云南卫视($|[-_ ].*)'}, {tvg_name: '^云南卫视$'}]}
+      "西藏卫视": {tvg-id: 西藏卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/西藏卫视.png", regex: [{name: '^西藏卫视($|[-_ ].*)'}, {tvg_name: '^西藏卫视$'}]}
+      "陕西卫视": {tvg-id: 陕西卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/陕西卫视.png", regex: [{name: '^陕西卫视($|[-_ ].*)'}, {tvg_name: '^陕西卫视$'}]}
+      "甘肃卫视": {tvg-id: 甘肃卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/甘肃卫视.png", regex: [{name: '^甘肃卫视($|[-_ ].*)'}, {tvg_name: '^甘肃卫视$'}]}
+      "青海卫视": {tvg-id: 青海卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/青海卫视.png", regex: [{name: '^青海卫视($|[-_ ].*)'}, {tvg_name: '^青海卫视$'}]}
+      "宁夏卫视": {tvg-id: 宁夏卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/宁夏卫视.png", regex: [{name: '^宁夏卫视($|[-_ ].*)'}, {tvg_name: '^宁夏卫视$'}]}
+      "新疆卫视": {tvg-id: 新疆卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/新疆卫视.png", regex: [{name: '^新疆卫视($|[-_ ].*)'}, {tvg_name: '^新疆卫视$'}]}
+      "兵团卫视": {tvg-id: 兵团卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/兵团卫视.png", regex: [{name: '^兵团卫视($|[-_ ].*)'}, {tvg_name: '^兵团卫视$'}]}
+      "三沙卫视": {tvg-id: 三沙卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/三沙卫视.png", regex: [{name: '^三沙卫视($|[-_ ].*)'}, {tvg_name: '^三沙卫视$'}]}
+      "延边卫视": {tvg-id: 延边卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/延边卫视.png", regex: [{name: '^延边卫视($|[-_ ].*)'}, {tvg_name: '^延边卫视$'}]}
+      "康巴卫视": {tvg-id: 康巴卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/康巴卫视.png", regex: [{name: '^康巴卫视($|[-_ ].*)'}, {tvg_name: '^康巴卫视$'}]}
+      "安多卫视": {tvg-id: 安多卫视, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/安多卫视.png", regex: [{name: '^安多卫视($|[-_ ].*)'}, {tvg_name: '^安多卫视$'}]}
       "*": [{group: '^(卫视|卫视频道|卫视频道2|卫视3)$'}]
 
   - name: "北京频道"
     channels:
-      "北京新闻": [{name: '^北京新闻($|[-_ ].*)'}, {tvg_name: '^北京新闻$'}]
-      "北京体育休闲": [{name: '^北京(体育休闲|4K测试频道)($|[-_ ].*)'}, {tvg_name: '^北京体育休闲$'}]
-      "北京纪实科教": [{name: '^北京纪实科教($|[-_ ].*)'}, {tvg_name: '^北京纪实科教$'}]
-      "北京文艺": [{name: '^北京文艺($|[-_ ].*)'}, {tvg_name: '^北京文艺$'}]
-      "北京影视": [{name: '^北京影视($|[-_ ].*)'}, {tvg_name: '^北京影视$'}]
-      "北京生活": [{name: '^北京生活($|[-_ ].*)'}, {tvg_name: '^北京生活$'}]
-      "北京财经": [{name: '^北京财经($|[-_ ].*)'}, {tvg_name: '^北京财经$'}]
-      "北京国际": [{name: '^北京国际($|[-_ ].*)'}, {tvg_name: '^北京国际$'}]
+      "北京新闻": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京新闻.png", regex: [{name: '^北京新闻($|[-_ ].*)'}, {tvg_name: '^北京新闻$'}]}
+      "北京体育休闲": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京体育休闲.png", regex: [{name: '^北京(体育休闲|4K测试频道)($|[-_ ].*)'}, {tvg_name: '^北京体育休闲$'}]}
+      "北京纪实科教": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京纪实科教.png", regex: [{name: '^北京纪实科教($|[-_ ].*)'}, {tvg_name: '^北京纪实科教$'}]}
+      "北京文艺": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京文艺.png", regex: [{name: '^北京文艺($|[-_ ].*)'}, {tvg_name: '^北京文艺$'}]}
+      "北京影视": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京影视.png", regex: [{name: '^北京影视($|[-_ ].*)'}, {tvg_name: '^北京影视$'}]}
+      "北京生活": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京生活.png", regex: [{name: '^北京生活($|[-_ ].*)'}, {tvg_name: '^北京生活$'}]}
+      "北京财经": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京财经.png", regex: [{name: '^北京财经($|[-_ ].*)'}, {tvg_name: '^北京财经$'}]}
+      "北京国际": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京国际.png", regex: [{name: '^北京国际($|[-_ ].*)'}, {tvg_name: '^北京国际$'}]}
       "BTV-重温经典": [{name: '^(BTV-)?重温经典$'}, {tvg_name: '^(BTV-)?重温经典$'}]
-      "淘电影": [{name: '^(北京IPTV[ -])?淘电影$'}, {tvg_name: '^(北京IPTV[ -])?淘电影$'}]
-      "淘剧场": [{name: '^(北京IPTV[ -])?淘剧场$'}, {tvg_name: '^(北京IPTV[ -])?淘剧场$'}]
-      "淘娱乐": [{name: '^(北京IPTV[ -])?淘娱乐$'}, {tvg_name: '^(北京IPTV[ -])?淘娱乐$'}]
-      "淘BABY": [{name: '^(北京IPTV[ -])?淘BABY$'}, {tvg_name: '^(北京IPTV[ -])?淘BABY$'}]
-      "萌宠TV": [{name: '^(北京IPTV[ -])?萌宠TV$'}, {tvg_name: '^(北京IPTV[ -])?萌宠TV$'}]
+      "淘电影": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/淘电影.png", regex: [{name: '^(北京IPTV[ -])?淘电影$'}, {tvg_name: '^(北京IPTV[ -])?淘电影$'}]}
+      "淘剧场": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/淘剧场.png", regex: [{name: '^(北京IPTV[ -])?淘剧场$'}, {tvg_name: '^(北京IPTV[ -])?淘剧场$'}]}
+      "淘娱乐": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/淘娱乐.png", regex: [{name: '^(北京IPTV[ -])?淘娱乐$'}, {tvg_name: '^(北京IPTV[ -])?淘娱乐$'}]}
+      "淘BABY": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/淘BABY.png", regex: [{name: '^(北京IPTV[ -])?淘BABY$'}, {tvg_name: '^(北京IPTV[ -])?淘BABY$'}]}
+      "萌宠TV": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/萌宠TV.png", regex: [{name: '^(北京IPTV[ -])?萌宠TV$'}, {tvg_name: '^(北京IPTV[ -])?萌宠TV$'}]}
       "*": [{group: '^北京$'}]
 
   - name: "山东省内"
     channels:
-      "山东齐鲁": [{name: '^山东齐鲁($|[-_ ].*)'}, {tvg_name: '^山东齐鲁($|[-_ ].*)'}]
-      "山东新闻": [{name: '^山东新闻($|[-_ ].*)'}, {tvg_name: '^山东新闻($|[-_ ].*)'}]
+      "山东齐鲁": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东齐鲁.png", regex: [{name: '^山东齐鲁($|[-_ ].*)'}, {tvg_name: '^山东齐鲁($|[-_ ].*)'}]}
+      "山东新闻": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东新闻.png", regex: [{name: '^山东新闻($|[-_ ].*)'}, {tvg_name: '^山东新闻($|[-_ ].*)'}]}
       "山东体育休闲": [{name: '^山东体育休闲($|[-_ ].*)'}, {tvg_name: '^山东体育休闲($|[-_ ].*)'}]
-      "山东文旅": [{name: '^山东文旅($|[-_ ].*)'}, {tvg_name: '^山东文旅($|[-_ ].*)'}]
-      "山东生活": [{name: '^山东生活($|[-_ ].*)'}, {tvg_name: '^山东生活($|[-_ ].*)'}]
-      "山东综艺": [{name: '^山东综艺($|[-_ ].*)'}, {tvg_name: '^山东综艺($|[-_ ].*)'}]
-      "山东农科": [{name: '^山东农科($|[-_ ].*)'}, {tvg_name: '^山东农科($|[-_ ].*)'}]
-      "山东少儿": [{name: '^山东少儿($|[-_ ].*)'}, {tvg_name: '^山东少儿($|[-_ ].*)'}]
-      "济南新闻综合": [{name: '^济南新闻综合($|[-_ ].*)'}, {tvg_name: '^济南新闻综合($|[-_ ].*)'}]
-      "济南生活": [{name: '^济南生活($|[-_ ].*)'}, {tvg_name: '^济南生活($|[-_ ].*)'}]
-      "济南都市": [{name: '^济南都市($|[-_ ].*)'}, {tvg_name: '^济南都市($|[-_ ].*)'}]
-      "济南文旅体育": [{name: '^济南文旅体育($|[-_ ].*)'}, {tvg_name: '^济南文旅体育($|[-_ ].*)'}]
+      "山东文旅": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东文旅.png", regex: [{name: '^山东文旅($|[-_ ].*)'}, {tvg_name: '^山东文旅($|[-_ ].*)'}]}
+      "山东生活": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东生活.png", regex: [{name: '^山东生活($|[-_ ].*)'}, {tvg_name: '^山东生活($|[-_ ].*)'}]}
+      "山东综艺": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东综艺.png", regex: [{name: '^山东综艺($|[-_ ].*)'}, {tvg_name: '^山东综艺($|[-_ ].*)'}]}
+      "山东农科": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东农科.png", regex: [{name: '^山东农科($|[-_ ].*)'}, {tvg_name: '^山东农科($|[-_ ].*)'}]}
+      "山东少儿": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/山东少儿.png", regex: [{name: '^山东少儿($|[-_ ].*)'}, {tvg_name: '^山东少儿($|[-_ ].*)'}]}
+      "济南新闻综合": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/济南新闻综合.png", regex: [{name: '^济南新闻综合($|[-_ ].*)'}, {tvg_name: '^济南新闻综合($|[-_ ].*)'}]}
+      "济南生活": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/济南生活.png", regex: [{name: '^济南生活($|[-_ ].*)'}, {tvg_name: '^济南生活($|[-_ ].*)'}]}
+      "济南都市": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/济南都市.png", regex: [{name: '^济南都市($|[-_ ].*)'}, {tvg_name: '^济南都市($|[-_ ].*)'}]}
+      "济南文旅体育": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/济南文旅体育.png", regex: [{name: '^济南文旅体育($|[-_ ].*)'}, {tvg_name: '^济南文旅体育($|[-_ ].*)'}]}
       "济南教育": [{name: '^济南教育($|[-_ ].*)'}, {tvg_name: '^济南教育($|[-_ ].*)'}]
       "济宁综合": [{name: '^济宁综合($|[-_ ].*)'}, {tvg_name: '^济宁综合($|[-_ ].*)'}]
-      "临沂综合": [{name: '^临沂综合($|[-_ ].*)'}, {tvg_name: '^临沂综合($|[-_ ].*)'}]
+      "临沂综合": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/临沂综合.png", regex: [{name: '^临沂综合($|[-_ ].*)'}, {tvg_name: '^临沂综合($|[-_ ].*)'}]}
       "青岛新闻综合": [{name: '^青岛新闻综合($|[-_ ].*)'}, {tvg_name: '^青岛新闻综合($|[-_ ].*)'}]
       "淄博新闻综合": [{name: '^淄博新闻综合($|[-_ ].*)'}, {tvg_name: '^淄博新闻综合($|[-_ ].*)'}]
       "*": [{group: '^(山东省内|省内频道2|省内3|地方台3)$'}]
 
   - name: "地方频道"
     channels:
-      "上海新闻综合": [{name: '^上海新闻综合$'}, {tvg_name: '^上海新闻综合$'}]
-      "第一财经": [{name: '^(上海)?第一财经$'}, {tvg_name: '^(上海)?第一财经$'}]
-      "五星体育": [{name: '^(上海)?五星体育$'}, {tvg_name: '^五星体育$'}]
-      "上海纪实人文": [{name: '^上海纪实人文($|[-_ ].*)'}, {tvg_name: '^上海纪实人文($|[-_ ].*)'}]
-      "东方财经": [{name: '^(上海|SiTV)?东方财经$'}, {tvg_name: '^(SiTV)?东方财经$'}]
-      "东方影视": [{name: '^上海东方影视$'}, {tvg_name: '^上海东方影视$'}]
-      "上海都市": [{name: '^上海都市$'}, {tvg_name: '^上海都市$'}]
-      "哈哈炫动": [{name: '^(上海)?哈哈炫动$'}, {tvg_name: '^(上海)?哈哈炫动$'}]
-      "浙江教科影视": [{name: '^浙江教科影视$'}, {tvg_name: '^浙江教科影视$'}]
+      "上海新闻综合": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/上海新闻综合.png", regex: [{name: '^上海新闻综合$'}, {tvg_name: '^上海新闻综合$'}]}
+      "第一财经": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/第一财经.png", regex: [{name: '^(上海)?第一财经$'}, {tvg_name: '^(上海)?第一财经$'}]}
+      "五星体育": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/五星体育.png", regex: [{name: '^(上海)?五星体育$'}, {tvg_name: '^五星体育$'}]}
+      "上海纪实人文": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/上海纪实人文.png", regex: [{name: '^上海纪实人文($|[-_ ].*)'}, {tvg_name: '^上海纪实人文($|[-_ ].*)'}]}
+      "东方财经": {tvg-id: 东方财经, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/东方财经.png", regex: [{name: '^(上海|SiTV)?东方财经$'}, {tvg_name: '^(SiTV)?东方财经$'}]}
+      "东方影视": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/东方影视.png", regex: [{name: '^上海东方影视$'}, {tvg_name: '^上海东方影视$'}]}
+      "上海都市": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/上海都市.png", regex: [{name: '^上海都市$'}, {tvg_name: '^上海都市$'}]}
+      "哈哈炫动": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/哈哈炫动.png", regex: [{name: '^(上海)?哈哈炫动$'}, {tvg_name: '^(上海)?哈哈炫动$'}]}
+      "浙江教科影视": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/浙江教科影视.png", regex: [{name: '^浙江教科影视$'}, {tvg_name: '^浙江教科影视$'}]}
       "*": [{group: '^(上海|浙江频道|内蒙频道|安徽|广东|贵州|海南|河北|河南|黑龙江|湖北|湖南|吉林|江苏|江西|辽宁|青海|四川|云南|浙江|重庆)$'}]
 
   - name: "数字频道"
     channels:
-      "CHC动作电影": [{name: '^CHC动作电影$'}, {tvg_name: '^CHC动作电影$'}]
-      "CHC家庭影院": [{name: '^CHC家庭影院$'}, {tvg_name: '^CHC家庭影院$'}]
-      "CHC影迷电影": [{name: '^CHC影迷电影$'}, {tvg_name: '^CHC影迷电影$'}]
-      "重温经典": [{name: '^重温经典$'}, {tvg_name: '^重温经典$'}]
-      "卡酷少儿": [{name: '^北京?卡酷少儿($|[-_ ].*)'}, {tvg_name: '^北京?卡酷少儿($|[-_ ].*)'}]
-      "金鹰卡通": [{name: '^湖南?金鹰卡通($|[-_ ].*)'}, {tvg_name: '^湖南?金鹰卡通($|[-_ ].*)'}]
-      "嘉佳卡通": [{name: '^(广东)?嘉佳卡通$'}, {tvg_name: '^(广东)?嘉佳卡通$'}]
-      "优漫卡通": [{name: '^(江苏)?优漫卡通$'}, {tvg_name: '^(江苏)?优漫卡通$'}]
-      "快乐垂钓": [{name: '^(湖南)?快乐垂钓($|[-_ ].*)'}, {tvg_name: '^(湖南)?快乐垂钓($|[-_ ].*)'}]
-      "茶频道": [{name: '^(湖南)?茶(频道)?($|[-_ ].*)'}, {tvg_name: '^(湖南)?茶(频道)?($|[-_ ].*)'}]
-      "求索动物": [{name: '^求索动物$'}, {tvg_name: '^求索动物$'}]
-      "求索纪录": [{name: '^求索纪录$'}, {tvg_name: '^求索纪录$'}]
-      "求索科学": [{name: '^求索科学$'}, {tvg_name: '^求索科学$'}]
-      "求索生活": [{name: '^求索生活$'}, {tvg_name: '^求索生活$'}]
+      "CHC动作电影": {tvg-id: CHC动作电影, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CHC动作电影.png", regex: [{name: '^CHC动作电影$'}, {tvg_name: '^CHC动作电影$'}]}
+      "CHC家庭影院": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CHC家庭影院.png", regex: [{name: '^CHC家庭影院$'}, {tvg_name: '^CHC家庭影院$'}]}
+      "CHC影迷电影": {tvg-id: CHC影迷电影, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/CHC影迷电影.png", regex: [{name: '^CHC影迷电影$'}, {tvg_name: '^CHC影迷电影$'}]}
+      "重温经典": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/重温经典.png", regex: [{name: '^重温经典$'}, {tvg_name: '^重温经典$'}]}
+      "卡酷少儿": {tvg-id: 卡酷少儿, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/卡酷少儿.png", regex: [{name: '^北京?卡酷少儿($|[-_ ].*)'}, {tvg_name: '^北京?卡酷少儿($|[-_ ].*)'}]}
+      "金鹰卡通": {tvg-id: 金鹰卡通, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/金鹰卡通.png", regex: [{name: '^湖南?金鹰卡通($|[-_ ].*)'}, {tvg_name: '^湖南?金鹰卡通($|[-_ ].*)'}]}
+      "嘉佳卡通": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/嘉佳卡通.png", regex: [{name: '^(广东)?嘉佳卡通$'}, {tvg_name: '^(广东)?嘉佳卡通$'}]}
+      "优漫卡通": {tvg-id: 优漫卡通, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/优漫卡通.png", regex: [{name: '^(江苏)?优漫卡通$'}, {tvg_name: '^(江苏)?优漫卡通$'}]}
+      "快乐垂钓": {tvg-id: 快乐垂钓, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/快乐垂钓.png", regex: [{name: '^(湖南)?快乐垂钓($|[-_ ].*)'}, {tvg_name: '^(湖南)?快乐垂钓($|[-_ ].*)'}]}
+      "茶频道": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/茶频道.png", regex: [{name: '^(湖南)?茶(频道)?($|[-_ ].*)'}, {tvg_name: '^(湖南)?茶(频道)?($|[-_ ].*)'}]}
+      "求索动物": {tvg-id: 求索频道, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/求索动物.png", regex: [{name: '^求索动物$'}, {tvg_name: '^求索动物$'}]}
+      "求索纪录": {tvg-id: 求索频道, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/求索纪录.png", regex: [{name: '^求索纪录$'}, {tvg_name: '^求索纪录$'}]}
+      "求索科学": {tvg-id: 求索频道, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/求索科学.png", regex: [{name: '^求索科学$'}, {tvg_name: '^求索科学$'}]}
+      "求索生活": {tvg-id: 求索频道, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/求索生活.png", regex: [{name: '^求索生活$'}, {tvg_name: '^求索生活$'}]}
       "超级电影": [{name: '^(NewTV[-_])?超级电影$'}, {tvg_name: '^(NewTV)?超级电影$'}]
       "超级电视剧": [{name: '^(NewTV[-_])?超级电视剧$'}, {tvg_name: '^(NewTV)?超级电视剧$'}]
       "超级综艺": [{name: '^(NewTV[-_])?超级综艺$'}, {tvg_name: '^(NewTV)?超级综艺$'}]
@@ -174,25 +180,25 @@ channel-groups:
       "精品大剧": [{name: '^(NewTV[-_])?精品大剧$'}, {tvg_name: '^(NewTV)?精品大剧$'}]
       "精品纪录": [{name: '^(NewTV[-_])?精品纪录$'}, {tvg_name: '^(NewTV)?精品纪录$'}]
       "精品体育": [{name: '^(NewTV[-_])?精品体育$'}, {tvg_name: '^(NewTV)?精品体育$'}]
-      "精品萌宠": [{name: '^(NewTV[-_])?精品萌宠$'}, {tvg_name: '^(NewTV)?精品萌宠$'}]
-      "动漫秀场": [{name: '^(SiTV[-_])?动漫秀场$'}, {tvg_name: '^(SiTV)?动漫秀场$'}]
-      "都市剧场": [{name: '^(SiTV[-_])?都市(剧场|频道)$'}, {tvg_name: '^(SiTV)?都市(剧场|频道)$'}]
-      "法治天地": [{name: '^(SiTV[-_]|上海)?法治天地$'}, {tvg_name: '^(SiTV)?法治天地$'}]
-      "欢笑剧场": [{name: '^(SiTV[-_])?欢笑剧场($|[-_ ].*)'}, {tvg_name: '^(SiTV)?欢笑剧场$'}]
-      "金色学堂": [{name: '^(SiTV[-_])?金色学堂$'}, {tvg_name: '^(SiTV)?金色学堂$'}]
-      "劲爆体育": [{name: '^(SiTV[-_])?劲爆体育$'}, {tvg_name: '^(SiTV)?劲爆体育$'}]
-      "乐游": [{name: '^(SiTV[-_])?乐游$'}, {tvg_name: '^(SiTV)?乐游$'}]
-      "魅力足球": [{name: '^(SiTV[-_])?魅力足球$'}, {tvg_name: '^(SiTV)?魅力足球$'}]
-      "生活时尚": [{name: '^(SiTV[-_])?生活时尚$'}, {tvg_name: '^(SiTV)?生活时尚$'}]
-      "游戏风云": [{name: '^(SiTV[-_])?游戏风云$'}, {tvg_name: '^(SiTV)?游戏风云$'}]
+      "精品萌宠": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/精品萌宠.png", regex: [{name: '^(NewTV[-_])?精品萌宠$'}, {tvg_name: '^(NewTV)?精品萌宠$'}]}
+      "动漫秀场": {tvg-id: 动漫秀场, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/动漫秀场.png", regex: [{name: '^(SiTV[-_])?动漫秀场$'}, {tvg_name: '^(SiTV)?动漫秀场$'}]}
+      "都市剧场": {tvg-id: 都市剧场, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/都市剧场.png", regex: [{name: '^(SiTV[-_])?都市(剧场|频道)$'}, {tvg_name: '^(SiTV)?都市(剧场|频道)$'}]}
+      "法治天地": {tvg-id: 法治天地, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/法治天地.png", regex: [{name: '^(SiTV[-_]|上海)?法治天地$'}, {tvg_name: '^(SiTV)?法治天地$'}]}
+      "欢笑剧场": {tvg-id: 欢笑剧场, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/欢笑剧场.png", regex: [{name: '^(SiTV[-_])?欢笑剧场($|[-_ ].*)'}, {tvg_name: '^(SiTV)?欢笑剧场$'}]}
+      "金色学堂": {tvg-id: 金色学堂, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/金色学堂.png", regex: [{name: '^(SiTV[-_])?金色学堂$'}, {tvg_name: '^(SiTV)?金色学堂$'}]}
+      "劲爆体育": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/劲爆体育.png", regex: [{name: '^(SiTV[-_])?劲爆体育$'}, {tvg_name: '^(SiTV)?劲爆体育$'}]}
+      "乐游": {tvg-id: 乐游, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/乐游.png", regex: [{name: '^(SiTV[-_])?乐游$'}, {tvg_name: '^(SiTV)?乐游$'}]}
+      "魅力足球": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/魅力足球.png", regex: [{name: '^(SiTV[-_])?魅力足球$'}, {tvg_name: '^(SiTV)?魅力足球$'}]}
+      "生活时尚": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/生活时尚.png", regex: [{name: '^(SiTV[-_])?生活时尚$'}, {tvg_name: '^(SiTV)?生活时尚$'}]}
+      "游戏风云": {tvg-id: 游戏风云, tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/游戏风云.png", regex: [{name: '^(SiTV[-_])?游戏风云$'}, {tvg_name: '^(SiTV)?游戏风云$'}]}
       "*": [{group: '^(数字频道|数字频道2|数字3|NEWTV|其他)$'}]
 
   - name: "4K超清"
     channels:
-      "北京IPTV4K": [{name: '^北京IPTV[ -]?4K(超清)?$'}, {tvg_name: '^北京IPTV[ -]?4K(超清)?$'}]
+      "北京IPTV4K": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/北京IPTV4K.png", regex: [{name: '^北京IPTV[ -]?4K(超清)?$'}, {tvg_name: '^北京IPTV[ -]?4K(超清)?$'}]}
       "北京4K测试频道": [{name: '^北京4K测试频道$'}, {tvg_name: '^北京4K测试频道$'}]
-      "华数4K": [{name: '^华数[-_ ]?4K$'}, {tvg_name: '^华数4K$'}]
-      "纯享4K": [{name: '^纯享[-_ ]?4K$'}, {tvg_name: '^纯享4K$'}]
+      "华数4K": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/华数4K.png", regex: [{name: '^华数[-_ ]?4K$'}, {tvg_name: '^华数4K$'}]}
+      "纯享4K": {tvg-logo: "https://gcore.jsdelivr.net/gh/taksssss/tv/icon/纯享4K.png", regex: [{name: '^纯享[-_ ]?4K$'}, {tvg_name: '^纯享4K$'}]}
       "咪咕4K-1": [{name: '^咪咕4K[-_ ]?1$'}]
       "咪咕4K-2": [{name: '^咪咕4K[-_ ]?2$'}]
       "Love Nature": [{name: '(?i)^Love Nature( 4K)?$'}, {tvg_name: '(?i)^LOVENATURE$'}]
